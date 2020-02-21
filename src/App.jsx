@@ -8,4 +8,6 @@ const element = (
         <h1>{message}</h1>
     </div>
 ); 
+
+
 ReactDOM.render(element, document.getElementById('content'));
