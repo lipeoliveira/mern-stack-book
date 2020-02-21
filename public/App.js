@@ -153,16 +153,39 @@ var IssueAdd = function (_React$Component2) {
     function IssueAdd() {
         _classCallCheck(this, IssueAdd);
 
-        return _possibleConstructorReturn(this, (IssueAdd.__proto__ || Object.getPrototypeOf(IssueAdd)).apply(this, arguments));
+        var _this2 = _possibleConstructorReturn(this, (IssueAdd.__proto__ || Object.getPrototypeOf(IssueAdd)).call(this));
+
+        _this2.handleSubmit = _this2.handleSubmit.bind(_this2);
+        return _this2;
     }
 
     _createClass(IssueAdd, [{
+        key: 'handleSubmit',
+        value: function handleSubmit(e) {
+            e.preventDefault();
+            var form = document.forms.issueAdd;
+            var issue = {
+                owner: form.owner.value,
+                title: form.title.value,
+                status: 'New'
+            };
+
+            this.props.createIssue(issue);
+            form.owner.value = "";form.title.value = "";
+        }
+    }, {
         key: 'render',
         value: function render() {
             return React.createElement(
-                'div',
-                null,
-                'This is a placeholder for the issue add.'
+                'form',
+                { name: 'issueAdd', onSubmit: this.handleSubmit },
+                React.createElement('input', { type: 'text', name: 'owner', placeholder: 'Owner' }),
+                React.createElement('input', { type: 'text', name: 'title', placeholder: 'Title' }),
+                React.createElement(
+                    'button',
+                    null,
+                    'Add'
+                )
             );
         }
     }]);
@@ -179,10 +202,7 @@ var IssueList = function (_React$Component3) {
         var _this3 = _possibleConstructorReturn(this, (IssueList.__proto__ || Object.getPrototypeOf(IssueList)).call(this));
 
         _this3.state = { issues: issues };
-
-        setTimeout(function () {
-            _this3.createIssue(sampleIssue);
-        }, 2000);
+        _this3.createIssue = _this3.createIssue.bind(_this3);
         return _this3;
     }
 
@@ -228,7 +248,7 @@ var IssueList = function (_React$Component3) {
                 React.createElement('hr', null),
                 React.createElement(IssueTable, { issues: this.state.issues }),
                 React.createElement('hr', null),
-                React.createElement(IssueAdd, null)
+                React.createElement(IssueAdd, { createIssue: this.createIssue })
             );
         }
     }]);
