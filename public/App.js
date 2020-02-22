@@ -2,21 +2,13 @@
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var issues = [{
-    id: 1, status: 'Assigned', owner: 'Eddie', effort: 14,
-    created: new Date('2018-08-16'), due: new Date('2018-08-30'),
-    title: 'Missing bottom border on panel'
-}, {
-    id: 2, status: 'New', owner: 'Ravan', effort: 5,
-    created: new Date('2018-08-15'), due: undefined,
-    title: 'Error in console when clicking Add'
-}];
 
 var sampleIssue = {
     status: 'New', owner: 'Pieta',
@@ -69,7 +61,7 @@ var IssueRow = function IssueRow(props) {
         React.createElement(
             'td',
             null,
-            issue.created.toDateString()
+            issue.created
         ),
         React.createElement(
             'td',
@@ -79,7 +71,7 @@ var IssueRow = function IssueRow(props) {
         React.createElement(
             'td',
             null,
-            issue.due ? issue.due.toDateString() : ''
+            issue.due ? issue.due : ''
         ),
         React.createElement(
             'td',
@@ -201,7 +193,7 @@ var IssueList = function (_React$Component3) {
 
         var _this3 = _possibleConstructorReturn(this, (IssueList.__proto__ || Object.getPrototypeOf(IssueList)).call(this));
 
-        _this3.state = { issues: issues };
+        _this3.state = { issues: [] };
         _this3.createIssue = _this3.createIssue.bind(_this3);
         return _this3;
     }
@@ -213,15 +205,65 @@ var IssueList = function (_React$Component3) {
         }
     }, {
         key: 'loadData',
-        value: function loadData() {
-            var _this4 = this;
+        value: function () {
+            var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+                var _this4 = this;
 
-            setTimeout(function () {
-                _this4.setState(function () {
-                    return { issues: issues };
-                });
-            }, 500);
-        }
+                var query, response, result, issueList;
+                return regeneratorRuntime.wrap(function _callee$(_context) {
+                    while (1) {
+                        switch (_context.prev = _context.next) {
+                            case 0:
+                                query = 'query {\n            issueList {\n                id title status owner\n                created effort due\n            }\n        }';
+                                _context.prev = 1;
+                                _context.next = 4;
+                                return fetch('/graphql', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ query: query })
+                                });
+
+                            case 4:
+                                response = _context.sent;
+                                _context.next = 7;
+                                return response.json();
+
+                            case 7:
+                                result = _context.sent;
+                                issueList = result.data.issueList;
+
+                                this.setState(function () {
+                                    return {
+                                        issues: issueList
+                                    };
+                                });
+                                _context.next = 15;
+                                break;
+
+                            case 12:
+                                _context.prev = 12;
+                                _context.t0 = _context['catch'](1);
+
+                                this.setState(function () {
+                                    return {
+                                        issues: _this4.state.issues
+                                    };
+                                });
+
+                            case 15:
+                            case 'end':
+                                return _context.stop();
+                        }
+                    }
+                }, _callee, this, [[1, 12]]);
+            }));
+
+            function loadData() {
+                return _ref.apply(this, arguments);
+            }
+
+            return loadData;
+        }()
     }, {
         key: 'createIssue',
         value: function createIssue(issue) {

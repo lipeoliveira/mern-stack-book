@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node server/server.js",
+    "start": "nodemon -w server -e js,graphql server/server.js",
     "compile": "babel src --out-dir public",
     "watch": "babel src --out-dir public --watch --verbose",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -21,7 +21,9 @@
   },
   "homepage": "https://github.com/lipeoliveira/mern-stack-book#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "apollo-server-express": "^2.10.1",
+    "express": "^4.17.1",
+    "graphql": "^14.6.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
