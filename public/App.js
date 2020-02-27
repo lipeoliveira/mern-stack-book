@@ -2,13 +2,70 @@
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+var graphQLFetch = function () {
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(query) {
+        var variables = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+        var response, body, result, error, details;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+                switch (_context.prev = _context.next) {
+                    case 0:
+                        _context.prev = 0;
+                        _context.next = 3;
+                        return fetch('/graphql', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ query: query, variables: variables })
+                        });
+
+                    case 3:
+                        response = _context.sent;
+                        _context.next = 6;
+                        return response.text();
+
+                    case 6:
+                        body = _context.sent;
+                        result = JSON.parse(body, jsonDateReviver);
+
+                        if (result.errors) {
+                            error = result.errors[0];
+
+                            if (error.extensions.code == 'BAD_USER_INPUT') {
+                                details = error.extensions.exception.errors.join('\n ');
+
+                                alert(error.message + ':\n ' + details);
+                            } else {
+                                alert(error.extensions.code + ': ' + error.message);
+                            }
+                        }
+                        return _context.abrupt('return', result.data);
+
+                    case 12:
+                        _context.prev = 12;
+                        _context.t0 = _context['catch'](0);
+
+                        alert('Error in sending data to server: ' + _context.t0.message);
+
+                    case 15:
+                    case 'end':
+                        return _context.stop();
+                }
+            }
+        }, _callee, this, [[0, 12]]);
+    }));
+
+    return function graphQLFetch(_x2) {
+        return _ref.apply(this, arguments);
+    };
+}();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 var dateRegex = new RegExp('^\\d\\d\\d\\d-\\d\\d-\\d\\d');
 
@@ -211,52 +268,33 @@ var IssueList = function (_React$Component3) {
     }, {
         key: 'loadData',
         value: function () {
-            var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-                var query, response, body, result;
-                return regeneratorRuntime.wrap(function _callee$(_context) {
+            var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+                var query, data;
+                return regeneratorRuntime.wrap(function _callee2$(_context2) {
                     while (1) {
-                        switch (_context.prev = _context.next) {
+                        switch (_context2.prev = _context2.next) {
                             case 0:
                                 query = 'query {\n            issueList {\n                id title status owner\n                created effort due\n            }\n        }';
-                                _context.prev = 1;
-                                _context.next = 4;
-                                return fetch('/graphql', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ query: query })
-                                });
+                                _context2.next = 3;
+                                return graphQLFetch(query);
 
-                            case 4:
-                                response = _context.sent;
-                                _context.next = 7;
-                                return response.text();
+                            case 3:
+                                data = _context2.sent;
 
-                            case 7:
-                                body = _context.sent;
-                                result = JSON.parse(body, jsonDateReviver);
+                                if (data) {
+                                    this.setState({ issues: data.issueList });
+                                }
 
-                                this.setState(function () {
-                                    return {
-                                        issues: result.data.issueList
-                                    };
-                                });
-                                _context.next = 14;
-                                break;
-
-                            case 12:
-                                _context.prev = 12;
-                                _context.t0 = _context['catch'](1);
-
-                            case 14:
+                            case 5:
                             case 'end':
-                                return _context.stop();
+                                return _context2.stop();
                         }
                     }
-                }, _callee, this, [[1, 12]]);
+                }, _callee2, this);
             }));
 
             function loadData() {
-                return _ref.apply(this, arguments);
+                return _ref2.apply(this, arguments);
             }
 
             return loadData;
@@ -264,40 +302,33 @@ var IssueList = function (_React$Component3) {
     }, {
         key: 'createIssue',
         value: function () {
-            var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(issue) {
-                var query;
-                return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(issue) {
+                var query, data;
+                return regeneratorRuntime.wrap(function _callee3$(_context3) {
                     while (1) {
-                        switch (_context2.prev = _context2.next) {
+                        switch (_context3.prev = _context3.next) {
                             case 0:
                                 query = 'mutation issueAdd($issue: IssueInputs!) {\n            issueAdd(issue: $issue) {\n                id\n            }\n        }';
-                                _context2.prev = 1;
-                                _context2.next = 4;
-                                return fetch('/graphql', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ query: query, variables: { issue: issue } })
-                                });
+                                _context3.next = 3;
+                                return graphQLFetch(query, { issue: issue });
 
-                            case 4:
-                                this.loadData();
-                                _context2.next = 9;
-                                break;
+                            case 3:
+                                data = _context3.sent;
 
-                            case 7:
-                                _context2.prev = 7;
-                                _context2.t0 = _context2['catch'](1);
+                                if (data) {
+                                    this.loadData();
+                                }
 
-                            case 9:
+                            case 5:
                             case 'end':
-                                return _context2.stop();
+                                return _context3.stop();
                         }
                     }
-                }, _callee2, this, [[1, 7]]);
+                }, _callee3, this);
             }));
 
-            function createIssue(_x) {
-                return _ref2.apply(this, arguments);
+            function createIssue(_x3) {
+                return _ref3.apply(this, arguments);
             }
 
             return createIssue;
