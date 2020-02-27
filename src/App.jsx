@@ -1,6 +1,8 @@
-const sampleIssue = {
-    status: 'New', owner: 'Pieta',
-    title: 'Completion date should be optional',
+const dateRegex = new RegExp('^\\d\\d\\d\\d-\\d\\d-\\d\\d')
+
+const jsonDateReviver = (key, value) => {
+    if (dateRegex.test(value)) { return new Date(value) }
+    return value
 }
 
 class IssueFilter extends React.Component {
@@ -18,9 +20,9 @@ const IssueRow = props => {
             <td>{issue.id}</td>
             <td>{issue.status}</td>
             <td>{issue.owner}</td>
-            <td>{issue.created}</td>
+            <td>{issue.created.toDateString()}</td>
             <td>{issue.effort}</td>
-            <td>{issue.due ? issue.due : ''}</td>
+            <td>{issue.due ? issue.due.toDateString() : ''}</td>
             <td>{issue.title}</td>
         </tr>
     )
@@ -56,15 +58,16 @@ class IssueAdd extends React.Component {
 
     handleSubmit(e) {
         e.preventDefault();
-        const form = document.forms.issueAdd;
+        const form = document.forms.issueAdd
         const issue = {
             owner: form.owner.value,
             title: form.title.value,
-            status: 'New',
+            due: new Date(new Date().getTime() + 24 * 60 * 60 * 1000 )
         }
 
         this.props.createIssue(issue);
-        form.owner.value = ""; form.title.value = "";
+        form.owner.value = ""
+        form.title.value = ""
     }
 
     render() {
@@ -95,7 +98,7 @@ class IssueList extends React.Component {
                 id title status owner
                 created effort due
             }
-        }`;
+        }`
 
         try {
             const response = await fetch('/graphql', {
@@ -103,25 +106,34 @@ class IssueList extends React.Component {
                 headers: { 'Content-Type': 'application/json'},
                 body: JSON.stringify({ query })
             })
-    
-            const result = await response.json()
-            const { issueList } = result.data
+
+            const  body = await response.text()
+            const  result = JSON.parse(body,   jsonDateReviver)
             this.setState(() => ({
-                issues: issueList
+                issues: result.data.issueList
             }))
         } catch(e) {
-            this.setState(() => ({
-                issues: this.state.issues
-            }))
+           // Do nothing at all
         }      
     }
 
-    createIssue(issue) {
-        issue.id = this.state.issues.length + 1
-        issue.created = new Date()
-        const newIssueList = this.state.issues.slice()
-        newIssueList.push(issue)
-        this.setState(() => ({ issues: newIssueList }))
+    async createIssue(issue) {
+        const query = `mutation issueAdd($issue: IssueInputs!) {
+            issueAdd(issue: $issue) {
+                id
+            }
+        }`
+
+        try {
+            await fetch('/graphql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json'},
+                body: JSON.stringify({query, variables: { issue }})
+            })
+            this.loadData()  
+        } catch (error) {
+            // Do nothing at all
+        }
     }
 
     render() {

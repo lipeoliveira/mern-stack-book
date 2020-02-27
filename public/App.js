@@ -10,9 +10,13 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var sampleIssue = {
-    status: 'New', owner: 'Pieta',
-    title: 'Completion date should be optional'
+var dateRegex = new RegExp('^\\d\\d\\d\\d-\\d\\d-\\d\\d');
+
+var jsonDateReviver = function jsonDateReviver(key, value) {
+    if (dateRegex.test(value)) {
+        return new Date(value);
+    }
+    return value;
 };
 
 var IssueFilter = function (_React$Component) {
@@ -61,7 +65,7 @@ var IssueRow = function IssueRow(props) {
         React.createElement(
             'td',
             null,
-            issue.created
+            issue.created.toDateString()
         ),
         React.createElement(
             'td',
@@ -71,7 +75,7 @@ var IssueRow = function IssueRow(props) {
         React.createElement(
             'td',
             null,
-            issue.due ? issue.due : ''
+            issue.due ? issue.due.toDateString() : ''
         ),
         React.createElement(
             'td',
@@ -159,11 +163,12 @@ var IssueAdd = function (_React$Component2) {
             var issue = {
                 owner: form.owner.value,
                 title: form.title.value,
-                status: 'New'
+                due: new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
             };
 
             this.props.createIssue(issue);
-            form.owner.value = "";form.title.value = "";
+            form.owner.value = "";
+            form.title.value = "";
         }
     }, {
         key: 'render',
@@ -207,9 +212,7 @@ var IssueList = function (_React$Component3) {
         key: 'loadData',
         value: function () {
             var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-                var _this4 = this;
-
-                var query, response, result, issueList;
+                var query, response, body, result;
                 return regeneratorRuntime.wrap(function _callee$(_context) {
                     while (1) {
                         switch (_context.prev = _context.next) {
@@ -226,31 +229,25 @@ var IssueList = function (_React$Component3) {
                             case 4:
                                 response = _context.sent;
                                 _context.next = 7;
-                                return response.json();
+                                return response.text();
 
                             case 7:
-                                result = _context.sent;
-                                issueList = result.data.issueList;
+                                body = _context.sent;
+                                result = JSON.parse(body, jsonDateReviver);
 
                                 this.setState(function () {
                                     return {
-                                        issues: issueList
+                                        issues: result.data.issueList
                                     };
                                 });
-                                _context.next = 15;
+                                _context.next = 14;
                                 break;
 
                             case 12:
                                 _context.prev = 12;
                                 _context.t0 = _context['catch'](1);
 
-                                this.setState(function () {
-                                    return {
-                                        issues: _this4.state.issues
-                                    };
-                                });
-
-                            case 15:
+                            case 14:
                             case 'end':
                                 return _context.stop();
                         }
@@ -266,15 +263,45 @@ var IssueList = function (_React$Component3) {
         }()
     }, {
         key: 'createIssue',
-        value: function createIssue(issue) {
-            issue.id = this.state.issues.length + 1;
-            issue.created = new Date();
-            var newIssueList = this.state.issues.slice();
-            newIssueList.push(issue);
-            this.setState(function () {
-                return { issues: newIssueList };
-            });
-        }
+        value: function () {
+            var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(issue) {
+                var query;
+                return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                    while (1) {
+                        switch (_context2.prev = _context2.next) {
+                            case 0:
+                                query = 'mutation issueAdd($issue: IssueInputs!) {\n            issueAdd(issue: $issue) {\n                id\n            }\n        }';
+                                _context2.prev = 1;
+                                _context2.next = 4;
+                                return fetch('/graphql', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ query: query, variables: { issue: issue } })
+                                });
+
+                            case 4:
+                                this.loadData();
+                                _context2.next = 9;
+                                break;
+
+                            case 7:
+                                _context2.prev = 7;
+                                _context2.t0 = _context2['catch'](1);
+
+                            case 9:
+                            case 'end':
+                                return _context2.stop();
+                        }
+                    }
+                }, _callee2, this, [[1, 7]]);
+            }));
+
+            function createIssue(_x) {
+                return _ref2.apply(this, arguments);
+            }
+
+            return createIssue;
+        }()
     }, {
         key: 'render',
         value: function render() {

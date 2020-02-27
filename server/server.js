@@ -2,7 +2,11 @@ const path = require('path')
 const fs = require('fs')
 const express = require('express')
 const { ApolloServer } = require('apollo-server-express')
+const { GraphQLScalarType } = require('graphql')
+const { Kind } = require('graphql/language')
+
 let aboutMessage = 'This is an example of text'
+
 const issues = [
     {
         id: 1, 
@@ -23,56 +27,51 @@ const issues = [
     }
 ]
 
-const setAboutMessage = function (_,  args) {
+const setAboutMessage = (_,  args) => {
   return aboutMessage = args.message
 }
 
+const issueAdd = (_, { issue }) => {
+    issue.id = issues.length + 1 
+    issue.created = new Date()
+
+    if (!issue.status) { issue.status = 'New' }
+    issues.push(issue)
+    return issue
+}
+
+const GraphQLDate = new GraphQLScalarType({
+    name: 'GraphQLDate',
+    'description': 'A Date() type in GraphQL as a scaler',
+    serialize(value)  { return value.toISOString() },
+    parseValue(value) { return new Date(value) },
+    parseLiteral(ast) {
+        return (ast.kind == Kind.STRING) ? new Date(ast.value) : undefined
+    },
+})
+
 const resolvers = {
     Query: {
-        about: function() {
-            return aboutMessage
-        },
-        issueList: function() {
-            return issues
-        }
+        about: () => aboutMessage,
+        issueList: () => issues
     },
     Mutation: {
         setAboutMessage,
-    }
+        issueAdd,
+    },
+    GraphQLDate
 }
 
 const app = express()
 
 app.use(express.static('public'))
 
-const readFile = (path) =>  {
-    return new Promise((resolve, reject) => {
-        fs.readFile(path, 'UTF-8', (err, fileContent) => {
-            if (err) {
-                reject(err)
-            } else {
-                resolve(fileContent)
-            }
-        }) 
-    })
-}
-
-const initApp = async () => {
-    try {
-        const fileContent = await readFile(path.join(__dirname, 'schema.graphql'))
-        const server = new ApolloServer({ 
-            typeDefs: fileContent,
-            resolvers, 
-        })
-
-        server.applyMiddleware({ app, path: '/graphql' })
-    } catch(err) {
-        console.log(err)
-    }
-}
-
-initApp()
+fs.readFile(path.join(__dirname, 'schema.graphql'),'UTF-8', (err, file) => {
+    if (err) { throw err }
+    const server = new ApolloServer({ typeDefs: file, resolvers })
+    server.applyMiddleware({ app, path: '/graphql' })
+})
 
 app.listen(3000, () => {
-  console.log('App started on port 3000')
+    console.log('App started on port 3000')
 })
